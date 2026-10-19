@@ -233,7 +233,6 @@ function renderDashboard(content) {
   content.innerHTML = `
     <div class="intro">
       <div>
-        <p class="eyebrow">MEMBER PORTAL</p>
         <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1>
       </div>
     </div>

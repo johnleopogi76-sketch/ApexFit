@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ApexFit | Gym Management</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status"></div>
+  <div id="loadingOverlay" class="loading-overlay" aria-live="polite" aria-label="Loading" aria-hidden="true">
+    <div class="loading-content">
+      <div class="loading-mark"><img src="logo.png" alt=""></div>
+      <div class="loading-spinner" aria-hidden="true"><span></span></div>
+      <p class="loading-title">APEXFIT</p>
+      <p class="loading-caption">Preparing your workspace…</p>
+    </div>
+  </div>
+
+  <!-- ===== Sign in ===== -->
+  <main id="loginScreen" class="login-layout">
+    <section class="hero">
+      <div class="hero-logo"><img src="logo.png" alt="ApexFit logo"></div>
+
+      <div class="hero-copy">
+        <p class="eyebrow">GYM MANAGEMENT SYSTEM</p>
+        <h1>Build strength.<br><span>Manage smarter.</span></h1>
+        <p>A simple workspace for ApexFit customers, memberships, sales and support.</p>
+      </div>
+    </section>
+
+    <section class="login-card">
+      <p class="eyebrow">WELCOME BACK</p>
+      <h2>Sign in to ApexFit</h2>
+      <p class="muted">Use your registered Admin, Staff, or Client account.</p>
+
+      <form id="loginForm">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="username" required placeholder="you@example.com">
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required placeholder="Your password">
+
+        <p id="loginMessage" class="message"></p>
+
+        <button class="primary full" type="submit">Sign in</button>
+      </form>
+
+      <a class="secondary full portal-link" href="client.html">Client Portal</a>
+
+      <small class="muted">Access is controlled by Supabase Auth and database policies.</small>
+    </section>
+  </main>
+
+  <!-- ===== Admin / Staff workspace ===== -->
+  <div id="app" class="shell hidden">
+    <aside id="sidebar" class="sidebar">
+      <a class="brand" href="#">
+        <img class="logo" src="logo.png" alt="ApexFit logo">
+        <span>ApexFit<small>FITNESS MANAGEMENT</small></span>
+      </a>
+
+      <p class="side-label">WORKSPACE</p>
+
+      <nav id="nav">
+        <button data-view="dashboard" class="nav active"><span class="nav-icon">▦</span>Overview</button>
+        <button data-view="customers" class="nav"><span class="nav-icon">♙</span>Customers</button>
+        <button data-view="membership_plans" class="nav"><span class="nav-icon">◇</span>Membership plans</button>
+        <button data-view="opportunities" class="nav"><span class="nav-icon">↗</span>Opportunities</button>
+        <button data-view="orders" class="nav"><span class="nav-icon">▤</span>Orders</button>
+        <button data-view="tickets" class="nav"><span class="nav-icon">☏</span>Support tickets</button>
+        <button data-view="interactions" class="nav"><span class="nav-icon">☷</span>Interactions</button>
+        <button data-view="users" class="nav"><span class="nav-icon">♧</span>User accounts</button>
+      </nav>
+
+      <div class="side-bottom">
+        <p>
+          <b>Keep moving forward.</b><br>
+          <small>Help every member reach their next goal.</small>
+        </p>
+        <button id="logout" class="logout">Sign out</button>
+      </div>
+    </aside>
+
+    <section class="main">
+      <header class="topbar">
+        <button id="menu" class="menu" aria-label="Open navigation">☰</button>
+        <div>
+          <p class="eyebrow">APEXFIT WORKSPACE</p>
+          <h2 id="pageTitle">Overview</h2>
+        </div>
+      </header>
+
+      <section id="clientPortal" class="view hidden"></section>
+
+      <!-- Overview -->
+      <section id="dashboard" class="view">
+        <div class="intro">
+          <div>
+            <h1>Make every day count.</h1>
+          </div>
+          <span class="connected">● Workspace connected</span>
+        </div>
+
+        <div id="stats" class="stats">
+          <article class="stat"><small>Customers</small><b>—</b></article>
+          <article class="stat"><small>Opportunities</small><b>—</b></article>
+          <article class="stat"><small>Orders</small><b>—</b></article>
+          <article class="stat"><small>Tickets</small><b>—</b></article>
+        </div>
+
+        <div class="panels">
+          <article class="panel">
+            <p class="eyebrow">QUICK ACCESS</p>
+            <h3>Manage your workspace</h3>
+
+            <div class="quick">
+              <button data-jump="customers">♙ <b>Customers</b><small>Member records</small></button>
+              <button data-jump="opportunities">↗ <b>Opportunities</b><small>Potential sales</small></button>
+              <button data-jump="tickets">☏ <b>Support tickets</b><small>Customer concerns</small></button>
+              <button data-jump="membership_plans">◇ <b>Membership plans</b><small>Plans and pricing</small></button>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h3>Workspace notes</h3>
+            <p class="note">Signed-in records load from Supabase.</p>
+            <p class="note">Admin and Staff access is controlled by database policies.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Records table (Customers, Orders, etc.) -->
+      <section id="records" class="view hidden">
+        <div class="intro">
+          <div>
+            <h1 id="recordsTitle">Customers</h1>
+            <p id="recordsDesc" class="muted">View and manage records.</p>
+          </div>
+          <button id="addBtn" class="primary">＋ Add record</button>
+        </div>
+
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Search records…" aria-label="Search records">
+          <span id="count" class="muted">0 records</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+
+          <div id="empty" class="empty hidden">
+            <h3>No records to show</h3>
+            <p>Try another search or add a record.</p>
+          </div>
+        </div>
+
+        <p class="footnote">Displayed columns come from your Supabase table. Database RLS policies enforce actual permissions.</p>
+      </section>
+    </section>
+  </div>
+
+  <!-- ===== Add / edit record dialog ===== -->
+  <dialog id="editorDialog">
+    <form id="editorForm">
+      <div class="dialog-top">
+        <div>
+          <p class="eyebrow">RECORD DETAILS</p>
+          <h2 id="editorTitle">Add record</h2>
+        </div>
+        <button type="button" id="closeDialog" class="close">×</button>
+      </div>
+
+      <p id="editorHelp" class="muted">Fill in the details below.</p>
+
+      <div id="editorFields" class="form-fields"></div>
+
+      <p id="editorMessage" class="message"></p>
+
+      <div class="dialog-actions">
+        <button type="button" id="cancel" class="secondary">Cancel</button>
+        <button id="save" class="primary" type="submit">Save record</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

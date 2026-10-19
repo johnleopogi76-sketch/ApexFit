@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ApexFit | Client Portal</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="client.js" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status"></div>
+  <div id="loadingOverlay" class="loading-overlay" aria-live="polite" aria-label="Loading" aria-hidden="true">
+    <div class="loading-content">
+      <div class="loading-mark"><img src="logo.png" alt=""></div>
+      <div class="loading-spinner" aria-hidden="true"><span></span></div>
+      <p class="loading-title">APEXFIT</p>
+      <p class="loading-caption">Preparing your workspace…</p>
+    </div>
+  </div>
+
+  <!-- ===== Sign in ===== -->
+  <main id="loginScreen" class="login-layout">
+    <section class="hero">
+      <div class="hero-logo"><img src="logo.png" alt="ApexFit logo"></div>
+
+      <div class="hero-copy">
+        <p class="eyebrow">APEXFIT MEMBER PORTAL</p>
+        <h1>Your fitness.<br><span>Your progress.</span></h1>
+        <p>View your profile, membership options, orders, and support requests.</p>
+      </div>
+    </section>
+
+    <section class="login-card">
+      <p class="eyebrow">CLIENT SIGN IN</p>
+      <h2>Welcome back</h2>
+      <p class="muted">Sign in with your registered client account.</p>
+
+      <form id="loginForm">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="username" required placeholder="you@example.com">
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required placeholder="Your password">
+
+        <p id="loginMessage" class="message"></p>
+
+        <button class="primary full" type="submit">Sign in</button>
+      </form>
+
+      <a class="secondary full portal-link" href="index.html">Admin / Staff Login</a>
+
+      <small class="muted">Client access is protected by Supabase Auth and Row Level Security.</small>
+    </section>
+  </main>
+
+  <!-- ===== Client portal ===== -->
+  <div id="clientApp" class="shell hidden">
+    <aside id="clientSidebar" class="sidebar">
+      <a class="brand" href="#">
+        <img class="logo" src="logo.png" alt="ApexFit logo">
+        <span>ApexFit<small>CLIENT PORTAL</small></span>
+      </a>
+
+      <p class="side-label">MY ACCOUNT</p>
+
+      <nav id="clientNav">
+        <button class="nav active" data-section="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+        <button class="nav" data-section="profile"><span class="nav-icon">♙</span>My Profile</button>
+        <button class="nav" data-section="plans"><span class="nav-icon">◇</span>Membership Plans</button>
+        <button class="nav" data-section="orders"><span class="nav-icon">▤</span>My Orders</button>
+        <button class="nav" data-section="tickets"><span class="nav-icon">☏</span>Support Tickets</button>
+      </nav>
+
+      <div class="side-bottom">
+        <p>
+          <b>Keep moving forward.</b><br>
+          <small>Your ApexFit journey starts here.</small>
+        </p>
+        <button id="logout" class="logout">↪ Sign out</button>
+      </div>
+    </aside>
+
+    <section class="main">
+      <header class="topbar">
+        <button id="menu" class="menu" aria-label="Open navigation">☰</button>
+        <div>
+          <p class="eyebrow">APEXFIT CLIENT PORTAL</p>
+          <h2 id="pageTitle">Dashboard</h2>
+        </div>
+      </header>
+
+      <section id="clientContent" class="view"></section>
+    </section>
+  </div>
+</body>
+</html>

@@ -370,7 +370,7 @@ dialog textarea,
   background: #dce6fb;
   border-color: #b9caf0;
   color: #1c2f9a;
-  box-shadow: inset 3px 0 0 #1c2f9a, 0 2px 6px rgba(28, 47, 154, .06);
+  box-shadow: 0 2px 6px rgba(28, 47, 154, .06);
 }
 
 .nav:focus-visible {
@@ -1176,5 +1176,107 @@ textarea {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
+  }
+}
+
+
+/* Navigation polish: clear, clickable blue-gray buttons without the left stripe. */
+.nav {
+  background: #e8eef9;
+  border: 1px solid #d2def2;
+  border-radius: 11px;
+  cursor: pointer;
+}
+.nav:hover {
+  background: #d9e5f8;
+  border-color: #b9ccef;
+}
+.nav.active {
+  background: #cfdcf5;
+  border-color: #aebfe5;
+  color: #1c2f9a;
+  font-weight: 800;
+}
+.connected { display: none !important; }
+
+
+/* Delete confirmation uses the same clean, rounded dialog style as Edit Record. */
+.delete-dialog {
+  width: min(600px, calc(100% - 28px));
+}
+.delete-dialog form {
+  padding: 25px;
+}
+.delete-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 22px 0 14px;
+  padding: 17px;
+  border: 1px solid #f0d8d5;
+  border-radius: 12px;
+  background: #fff8f7;
+  color: #293252;
+}
+.delete-icon {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #fbe4e1;
+  color: #b54b3d;
+  font-size: 22px;
+  font-weight: 800;
+}
+.delete-notice strong {
+  display: block;
+  margin: 1px 0 7px;
+  color: #9d4137;
+  font-size: 14px;
+}
+.delete-notice p {
+  margin: 0 0 7px;
+  color: #6b7499;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.delete-notice .delete-record-name {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  color: #202b55;
+  font-size: 14px;
+  font-weight: 750;
+}
+.danger-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #a83d36;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 750;
+}
+.danger-button:hover {
+  background: #8f302b;
+}
+.danger-button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+.delete-dialog .dialog-actions {
+  margin-top: 14px;
+}
+@media (max-width: 520px) {
+  .delete-dialog form {
+    padding: 20px;
+  }
+  .delete-notice {
+    padding: 13px;
+    gap: 10px;
+  }
+  .delete-dialog .dialog-actions {
+    flex-wrap: wrap;
   }
 }

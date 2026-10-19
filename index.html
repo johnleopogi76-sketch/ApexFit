@@ -98,9 +98,9 @@
       <section id="dashboard" class="view">
         <div class="intro">
           <div>
-            <h1>Make every day count.</h1>
+            <p class="eyebrow" id="dashboardRole">APEXFITNESS WORKSPACE</p>
+            <h1 id="dashboardGreeting">Welcome back!</h1>
           </div>
-          <span class="connected">● Workspace connected</span>
         </div>
 
         <div id="stats" class="stats">
@@ -185,5 +185,35 @@
       </div>
     </form>
   </dialog>
+
+  <!-- ===== Delete confirmation dialog ===== -->
+  <dialog id="deleteDialog" class="delete-dialog">
+    <form id="deleteForm" method="dialog">
+      <div class="dialog-top">
+        <div>
+          <p class="eyebrow">CONFIRM ACTION</p>
+          <h2>Delete record?</h2>
+        </div>
+        <button type="button" id="closeDeleteDialog" class="close" aria-label="Close delete confirmation">×</button>
+      </div>
+
+      <div class="delete-notice">
+        <div class="delete-icon" aria-hidden="true">!</div>
+        <div>
+          <strong>This action cannot be undone.</strong>
+          <p>You are about to permanently delete this <span id="deleteRecordType">record</span>:</p>
+          <p class="delete-record-name" id="deleteRecordName">Selected record</p>
+        </div>
+      </div>
+
+      <p id="deleteMessage" class="message"></p>
+
+      <div class="dialog-actions">
+        <button type="button" id="cancelDelete" class="secondary">Cancel</button>
+        <button type="button" id="confirmDelete" class="danger-button">Delete record</button>
+      </div>
+    </form>
+  </dialog>
+
 </body>
 </html>

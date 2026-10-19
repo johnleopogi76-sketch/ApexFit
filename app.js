@@ -169,6 +169,19 @@ async function enterApp(signedInUser) {
   $("#loginScreen").classList.add("hidden");
   $("#app").classList.remove("hidden");
 
+  // Personalize the Overview using the signed-in user's real profile and role.
+  const displayName = (profile?.full_name || user.email || "there").trim();
+  const firstName = displayName.includes("@") ? displayName.split("@")[0] : displayName.split(/\s+/)[0];
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const roleName = profile?.role || "User";
+  const greeting = document.querySelector("#dashboardGreeting");
+  const roleLabel = document.querySelector("#dashboardRole");
+  const welcomeNote = document.querySelector("#dashboardWelcomeNote");
+  if (greeting) greeting.textContent = `${timeGreeting}, ${firstName}!`;
+  if (roleLabel) roleLabel.textContent = `APEXFITNESS ${roleName.toUpperCase()} WORKSPACE`;
+  if (welcomeNote) welcomeNote.textContent = `You're signed in as ${roleName}. Here's your workspace overview.`;
+
   $("#clientPortal").classList.add("hidden");
   $("#sidebar").classList.remove("client-mode");
   $("#dashboard").classList.remove("hidden");
@@ -277,15 +290,14 @@ async function renderClientPortal() {
       <div>
         <p class="eyebrow">MEMBER PORTAL</p>
         <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1>
-        <p class="muted">Your ApexFit information in one place.</p>
+        <p class="muted">Your ApexFitness information in one place.</p>
       </div>
-      <span class="connected">● Client account</span>
     </div>
 
     <div class="client-grid">
       <article class="panel">
         <p class="eyebrow">MY PROFILE</p>
-        <h3>${esc(customer.full_name || "ApexFit Client")}</h3>
+        <h3>${esc(customer.full_name || "ApexFitness Client")}</h3>
         <p class="client-detail"><b>Email</b><span>${esc(customer.email || user.email)}</span></p>
         <p class="client-detail"><b>Phone</b><span>${esc(customer.phone || "Not provided")}</span></p>
         <p class="client-detail"><b>Status</b><span>${esc(customer.status || "—")}</span></p>
@@ -312,7 +324,7 @@ async function renderClientPortal() {
 
     <p class="footnote">
       You can view only the customer record linked to your signed-in account.
-      Contact ApexFit staff for changes or new orders.
+      Contact ApexFitness staff for changes or new orders.
     </p>
   `;
 
@@ -597,7 +609,7 @@ function renderRows() {
       if (button.dataset.action === "edit") {
         openEditor(row);
       } else {
-        removeRow(row);
+        openDeleteDialog(row);
       }
     });
   });
@@ -896,9 +908,18 @@ $("#editorForm").addEventListener("submit", async e => {
   }
 
   if (view === "tickets" && payload.status === "closed") {
-    $("#editorMessage").textContent =
-      "To close a ticket, this database requires a closure time and satisfaction rating. Keep it Open or Assigned here, or use a dedicated close-ticket workflow.";
-    return;
+    if (payload.satisfaction === null || payload.satisfaction === undefined || payload.satisfaction === "") {
+      $("#editorMessage").textContent =
+        "Please enter a satisfaction rating from 1 to 5 before closing this ticket.";
+      return;
+    }
+
+    // Preserve the original closure time when editing an already-closed ticket.
+    // For a ticket being closed now, supply the timestamp required by Supabase.
+    payload.closed_at = editing?.closed_at || new Date().toISOString();
+  } else if (view === "tickets" && editing && editing.status === "closed") {
+    // Clear the closure timestamp if a closed ticket is reopened.
+    payload.closed_at = null;
   }
 
   const button = $("#save");
@@ -933,25 +954,72 @@ $("#editorForm").addEventListener("submit", async e => {
   }
 });
 
-async function removeRow(row) {
+let pendingDelete = null;
+
+function openDeleteDialog(row) {
   if (!admin()) {
     return notify("Only an Admin can delete records.", true);
   }
 
-  if (!confirm("Delete this record? This cannot be undone.")) return;
+  pendingDelete = row;
+  const recordLabel =
+    row.subject ||
+    row.full_name ||
+    row.name ||
+    row.email ||
+    row.display_code ||
+    "this record";
 
-  const { error } = await db
-    .from(view)
-    .delete()
-    .eq("id", row.id);
-
-  if (error) return notify(errText(error), true);
-
-  notify("Record deleted.");
-
-  await loadTable();
-  await dashboard();
+  $("#deleteRecordName").textContent = String(recordLabel);
+  $("#deleteRecordType").textContent =
+    (TABLES[view]?.[0] || "Record").replace(/s$/, "");
+  $("#deleteMessage").textContent = "";
+  $("#confirmDelete").disabled = false;
+  $("#confirmDelete").textContent = "Delete record";
+  $("#deleteDialog").showModal();
 }
+
+async function removeRow() {
+  if (!admin()) {
+    return notify("Only an Admin can delete records.", true);
+  }
+  if (!pendingDelete) return;
+
+  const button = $("#confirmDelete");
+  button.disabled = true;
+  button.textContent = "Deleting…";
+  $("#deleteMessage").textContent = "";
+
+  try {
+    const { error } = await db
+      .from(view)
+      .delete()
+      .eq("id", pendingDelete.id);
+
+    if (error) throw error;
+
+    $("#deleteDialog").close();
+    pendingDelete = null;
+    notify("Record deleted.");
+    await loadTable();
+    await dashboard();
+  } catch (error) {
+    $("#deleteMessage").textContent = errText(error);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Delete record";
+  }
+}
+
+$("#confirmDelete").addEventListener("click", removeRow);
+$("#cancelDelete").addEventListener("click", () => {
+  $("#deleteDialog").close();
+  pendingDelete = null;
+});
+$("#closeDeleteDialog").addEventListener("click", () => {
+  $("#deleteDialog").close();
+  pendingDelete = null;
+});
 
 $("#loginForm").addEventListener("submit", async e => {
   e.preventDefault();

@@ -153,7 +153,7 @@ async function enter(signedInUser) {
     await db.auth.signOut();
     message(
       "No customer record is linked to this account. " +
-      "Please ask ApexFit staff to link your account."
+      "Please ask ApexFitness staff to link your account."
     );
     return;
   }
@@ -236,7 +236,6 @@ function renderDashboard(content) {
         <p class="eyebrow">MEMBER PORTAL</p>
         <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1>
       </div>
-      <span class="connected">● Client account</span>
     </div>
 
     <div class="client-grid">
@@ -310,7 +309,7 @@ async function renderList(content, section) {
   content.innerHTML = `
     <div class="intro">
       <div>
-        <p class="eyebrow">MY APEXFIT</p>
+        <p class="eyebrow">MY APEXFITNESS</p>
         <h1>${esc(config.title)}</h1>
       </div>
     </div>
@@ -336,11 +335,10 @@ async function showSection(section) {
   content.innerHTML = `
     <div class="intro">
       <div>
-        <p class="eyebrow">MY APEXFIT</p>
+        <p class="eyebrow">MY APEXFITNESS</p>
         <h1>${esc(title)}</h1>
         <p class="muted">Your account information in one place.</p>
       </div>
-      <span class="connected">● Client account</span>
     </div>
 
     <article class="panel"><p class="muted">Loading…</p></article>`;

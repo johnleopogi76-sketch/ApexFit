@@ -1,4 +1,3 @@
-
 const SUPABASE_URL = "https://ondobvmvduqoaezqddxe.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pwDCukl5Rfvo8FRKZr-hXQ_ITdBvUPI";
 
@@ -1043,7 +1042,13 @@ $("#loginForm").addEventListener("submit", async e => {
 
     await enterApp(data.user);
   } catch (error) {
-    message(errText(error));
+    const msg = errText(error);
+
+    if (msg.toLowerCase().includes("invalid login credentials")) {
+      message("Wrong email or password. Please try again.");
+    } else {
+      message(msg);
+    }
   } finally {
     button.disabled = false;
     button.textContent = "Sign in";

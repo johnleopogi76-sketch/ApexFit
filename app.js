@@ -134,16 +134,11 @@ async function loadProfile(signedInUser) {
   };
 }
 
-/*
- * Admin and Staff can use this workspace.
- * Customers must sign in through client.html.
- */
 async function enterApp(signedInUser) {
   user = signedInUser;
 
   await loadProfile(user);
 
-  // Block customer accounts from the Admin/Staff workspace.
   if (isClient()) {
     await db.auth.signOut();
     user = null;
@@ -154,7 +149,6 @@ async function enterApp(signedInUser) {
     );
   }
 
-  // Block any account that is not Admin or Staff.
   if (!staffOrAdmin()) {
     await db.auth.signOut();
     user = null;
@@ -168,7 +162,6 @@ async function enterApp(signedInUser) {
   $("#loginScreen").classList.add("hidden");
   $("#app").classList.remove("hidden");
 
-  // Personalize the Overview using the signed-in user's real profile and role.
   const displayName = (profile?.full_name || user.email || "there").trim();
   const firstName = displayName.includes("@") ? displayName.split("@")[0] : displayName.split(/\s+/)[0];
   const hour = new Date().getHours();
@@ -190,10 +183,6 @@ async function enterApp(signedInUser) {
   await navigate(view);
 }
 
-/*
- * Load readable labels for related records.
- * Original UUIDs remain unchanged for database relationships.
- */
 async function loadDisplayMaps() {
   displayMaps = {};
 
@@ -275,10 +264,6 @@ function displayCell(column, value, row = null) {
   return safe(value);
 }
 
-/*
- * This function remains for compatibility with the existing project.
- * The Admin/Staff page no longer calls it for customer accounts.
- */
 async function renderClientPortal() {
   const customer = profile.customer;
 
@@ -734,7 +719,6 @@ async function loadReferenceOptions(field) {
 
   const displayColumn = field.display || "id";
 
-  // Avoid selecting the same column twice.
   const selectColumns = [
     ...new Set(["id", "display_code", displayColumn])
   ].join(", ");
@@ -913,11 +897,8 @@ $("#editorForm").addEventListener("submit", async e => {
       return;
     }
 
-    // Preserve the original closure time when editing an already-closed ticket.
-    // For a ticket being closed now, supply the timestamp required by Supabase.
     payload.closed_at = editing?.closed_at || new Date().toISOString();
   } else if (view === "tickets" && editing && editing.status === "closed") {
-    // Clear the closure timestamp if a closed ticket is reopened.
     payload.closed_at = null;
   }
 

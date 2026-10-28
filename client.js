@@ -1,7 +1,3 @@
-/* ==========================================================================
-   ApexFit | Client Portal
-   ========================================================================== */
-
 const SUPABASE_URL = "https://ondobvmvduqoaezqddxe.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pwDCukl5Rfvo8FRKZr-hXQ_ITdBvUPI";
 
@@ -20,11 +16,6 @@ const PAGE_TITLES = {
   tickets: "Support Tickets",
 };
 
-/* --------------------------------------------------------------------------
-   Helpers
-   -------------------------------------------------------------------------- */
-
-// Escape text before putting it inside HTML.
 const esc = (value) =>
   String(value ?? "—").replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -34,7 +25,6 @@ const esc = (value) =>
     "'": "&#39;",
   })[char]);
 
-// Format a number as Philippine pesos, e.g. ₱1,500.00
 function formatPeso(amount) {
   return "₱" + Number(amount).toLocaleString("en-PH", {
     minimumFractionDigits: 2,
@@ -56,10 +46,6 @@ function notify(text) {
   setTimeout(() => el.classList.remove("show"), 2500);
 }
 
-/* --------------------------------------------------------------------------
-   Startup
-   -------------------------------------------------------------------------- */
-
 async function init() {
   if (!window.supabase?.createClient) {
     message("Supabase could not load. Check your internet connection.");
@@ -71,19 +57,16 @@ async function init() {
   $("#loginForm").addEventListener("submit", signIn);
   $("#logout").addEventListener("click", signOut);
 
-  // Mobile menu button.
   $("#menu").addEventListener("click", () => {
     $("#clientSidebar").classList.toggle("open");
   });
 
-  // Sidebar navigation.
   $("#clientNav").addEventListener("click", (e) => {
     const button = e.target.closest("[data-section]");
 
     if (button) showSection(button.dataset.section);
   });
 
-  // Close the mobile sidebar when tapping outside of it.
   document.addEventListener("click", (e) => {
     const sidebar = $("#clientSidebar");
     const clickedOutside =
@@ -94,15 +77,10 @@ async function init() {
     }
   });
 
-  // Restore an existing session, if any.
   const { data: { session } } = await db.auth.getSession();
 
   if (session) await enter(session.user);
 }
-
-/* --------------------------------------------------------------------------
-   Sign in / sign out
-   -------------------------------------------------------------------------- */
 
 async function signIn(e) {
   e.preventDefault();
@@ -125,7 +103,13 @@ async function signIn(e) {
 
     await enter(data.user);
   } catch (err) {
-    message(err.message || "Sign-in failed.");
+    const msg = err.message || "Sign-in failed.";
+
+    if (msg.toLowerCase().includes("invalid login credentials")) {
+      message("Wrong email or password. Please try again.");
+    } else {
+      message(msg);
+    }
   } finally {
     button.disabled = false;
     button.textContent = "Sign in";
@@ -178,11 +162,6 @@ async function signOut() {
   $("#clientSidebar").classList.remove("open");
 }
 
-/* --------------------------------------------------------------------------
-   Sections
-   -------------------------------------------------------------------------- */
-
-// Sections that load a list from Supabase.
 const LIST_SECTIONS = {
   plans: {
     table: "membership_plans",
@@ -290,7 +269,6 @@ async function renderList(content, section) {
   const config = LIST_SECTIONS[section];
   const query = db.from(config.table).select("*");
 
-  // Membership plans are shared; orders and tickets belong to this customer.
   const result = section === "plans"
     ? await query.limit(100)
     : await query.eq("customer_id", customer.id).limit(100);
@@ -330,7 +308,6 @@ async function showSection(section) {
 
   $("#clientSidebar").classList.remove("open");
 
-  // Temporary loading state.
   content.innerHTML = `
     <div class="intro">
       <div>

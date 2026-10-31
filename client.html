@@ -43,11 +43,30 @@
         <label for="password">Password</label>
         <input id="password" type="password" autocomplete="current-password" required placeholder="Your password">
 
-        <p id="loginMessage" class="message"></p>
+        <p id="loginMessage" class="message" aria-live="polite"></p>
 
         <button class="primary full" type="submit">Sign in</button>
       </form>
 
+      <form id="registerForm" class="hidden">
+        <label for="registerName">Full name</label>
+        <input id="registerName" type="text" autocomplete="name" required maxlength="120" placeholder="Your full name">
+
+        <label for="registerPhone">Phone number</label>
+        <input id="registerPhone" type="tel" autocomplete="tel" maxlength="30" placeholder="Your phone number">
+
+        <label for="registerEmail">Email address</label>
+        <input id="registerEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+
+        <label for="registerPassword">Password (at least 8 characters)</label>
+        <input id="registerPassword" type="password" autocomplete="new-password" required minlength="8" placeholder="Create a password">
+
+        <p id="registerMessage" class="message" aria-live="polite"></p>
+        <button class="primary full" type="submit">Create customer account</button>
+      </form>
+
+      <button id="showRegister" class="secondary full" type="button">New here? Register</button>
+      <button id="showLogin" class="secondary full hidden" type="button">Already registered? Sign in</button>
       <a class="secondary full portal-link" href="index.html">Admin / Staff Login</a>
 
     </section>

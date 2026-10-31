@@ -17,19 +17,26 @@ const PAGE_TITLES = {
 };
 
 const esc = (value) =>
-  String(value ?? "—").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  })[char]);
+  String(value ?? "—").replace(
+    /[&<>"']/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[char])
+  );
 
 function formatPeso(amount) {
-  return "₱" + Number(amount).toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return (
+    "₱" +
+    Number(amount).toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
 }
 
 function message(text, error = true) {
@@ -55,6 +62,9 @@ async function init() {
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   $("#loginForm").addEventListener("submit", signIn);
+  $("#registerForm").addEventListener("submit", registerCustomer);
+  $("#showRegister").addEventListener("click", () => toggleAuthForm(true));
+  $("#showLogin").addEventListener("click", () => toggleAuthForm(false));
   $("#logout").addEventListener("click", signOut);
 
   $("#menu").addEventListener("click", () => {
@@ -77,9 +87,91 @@ async function init() {
     }
   });
 
-  const { data: { session } } = await db.auth.getSession();
+  const {
+    data: { session },
+  } = await db.auth.getSession();
 
   if (session) await enter(session.user);
+}
+
+function toggleAuthForm(showRegister) {
+  $("#loginForm").classList.toggle("hidden", showRegister);
+  $("#registerForm").classList.toggle("hidden", !showRegister);
+  $("#showRegister").classList.toggle("hidden", showRegister);
+  $("#showLogin").classList.toggle("hidden", !showRegister);
+  $(".login-card .eyebrow").textContent = showRegister
+    ? "CREATE YOUR ACCOUNT"
+    : "CLIENT SIGN IN";
+  $(".login-card h2").textContent = showRegister
+    ? "Join ApexFitness"
+    : "Welcome back";
+  $(".login-card > .muted").textContent = showRegister
+    ? "Register once to access your client portal anytime."
+    : "Sign in with your registered client account.";
+  $("#loginMessage").textContent = "";
+  $("#registerMessage").textContent = "";
+}
+
+async function registerCustomer(e) {
+  e.preventDefault();
+  if (!db) return;
+
+  const button = $("#registerForm button[type=submit]");
+  const fullName = $("#registerName").value.trim();
+  const phone = $("#registerPhone").value.trim();
+  const email = $("#registerEmail").value.trim().toLowerCase();
+  const password = $("#registerPassword").value;
+
+  if (!fullName) {
+    $("#registerMessage").textContent = "Please enter your full name.";
+    return;
+  }
+  if (password.length < 8) {
+    $("#registerMessage").textContent =
+      "Your password must be at least 8 characters.";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Creating account…";
+  $("#registerMessage").textContent = "";
+  document.querySelector("#loadingOverlay")?.classList.add("active");
+  document
+    .querySelector("#loadingOverlay")
+    ?.setAttribute("aria-hidden", "false");
+
+  try {
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName, phone },
+        emailRedirectTo: window.location.origin + window.location.pathname,
+      },
+    });
+    if (error) throw error;
+
+    if (data.session && data.user) {
+      await enter(data.user);
+      return;
+    }
+
+    $("#registerMessage").style.color = "#1c2f9a";
+    $("#registerMessage").textContent =
+      "Account created. Check your email to confirm your address, then return here and sign in.";
+    $("#registerForm").reset();
+  } catch (err) {
+    const msg = err.message || "Registration failed. Please try again.";
+    $("#registerMessage").style.color = "#b44b39";
+    $("#registerMessage").textContent = msg;
+  } finally {
+    button.disabled = false;
+    button.textContent = "Create customer account";
+    document.querySelector("#loadingOverlay")?.classList.remove("active");
+    document
+      .querySelector("#loadingOverlay")
+      ?.setAttribute("aria-hidden", "true");
+  }
 }
 
 async function signIn(e) {
@@ -90,7 +182,9 @@ async function signIn(e) {
   button.disabled = true;
   button.textContent = "Signing in…";
   document.querySelector("#loadingOverlay")?.classList.add("active");
-  document.querySelector("#loadingOverlay")?.setAttribute("aria-hidden", "false");
+  document
+    .querySelector("#loadingOverlay")
+    ?.setAttribute("aria-hidden", "false");
   message("");
 
   try {
@@ -114,7 +208,9 @@ async function signIn(e) {
     button.disabled = false;
     button.textContent = "Sign in";
     document.querySelector("#loadingOverlay")?.classList.remove("active");
-    document.querySelector("#loadingOverlay")?.setAttribute("aria-hidden", "true");
+    document
+      .querySelector("#loadingOverlay")
+      ?.setAttribute("aria-hidden", "true");
   }
 }
 
@@ -137,7 +233,7 @@ async function enter(signedInUser) {
     await db.auth.signOut();
     message(
       "No customer record is linked to this account. " +
-      "Please ask ApexFitness staff to link your account."
+        "Please ask ApexFitness staff to link your account."
     );
     return;
   }
@@ -167,80 +263,26 @@ const LIST_SECTIONS = {
     table: "membership_plans",
     title: "Available membership plans",
     empty: "No membership plans are available.",
-    render: (r) => `
-      <div class="client-item">
-        <b>${esc(r.name || "Membership plan")}</b>
-        <span>
-          ${r.price == null ? "Price not listed" : formatPeso(r.price)}
-          ${r.duration_months ? ` · ${esc(r.duration_months)} month(s)` : ""}
-        </span>
-      </div>`,
+    render: (r) => ` <div class="client-item"> <b>${esc(r.name || "Membership plan")}</b> <span> ${r.price == null ? "Price not listed" : formatPeso(r.price)} ${r.duration_months ? ` · ${esc(r.duration_months)} month(s)` : ""} </span> </div>`,
   },
 
   orders: {
     table: "orders",
     title: "My orders",
     empty: "You don't have any orders yet.",
-    render: (r) => `
-      <div class="client-item">
-        <b>Order ${esc(String(r.id || "").slice(0, 8) || "record")}</b>
-        <span>
-          ${r.amount == null ? "Amount not listed" : "Amount: " + formatPeso(r.amount)}
-          ${r.order_date ? " · Date: " + esc(r.order_date) : ""}
-        </span>
-      </div>`,
+    render: (r) => ` <div class="client-item"> <b>Order ${esc(String(r.id || "").slice(0, 8) || "record")}</b> <span> ${ r.amount == null ? "Amount not listed" : "Amount: " + formatPeso(r.amount) } ${r.order_date ? " · Date: " + esc(r.order_date) : ""} </span> </div>`,
   },
 
   tickets: {
     table: "tickets",
     title: "My support tickets",
     empty: "You don't have any support tickets yet.",
-    render: (r) => `
-      <div class="client-item">
-        <b>${esc(r.subject || "Support request")}</b>
-        <span>
-          ${esc(r.status || "Status not set")}
-          ${r.opened_at
-            ? " · Opened: " + esc(new Date(r.opened_at).toLocaleDateString("en-PH"))
-            : ""}
-        </span>
-      </div>`,
+    render: (r) => ` <div class="client-item"> <b>${esc(r.subject || "Support request")}</b> <span> ${esc(r.status || "Status not set")} ${ r.opened_at ? " · Opened: " + esc(new Date(r.opened_at).toLocaleDateString("en-PH")) : "" } </span> </div>`,
   },
 };
 
 function renderDashboard(content) {
-  content.innerHTML = `
-    <div class="intro">
-      <div>
-        <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1>
-      </div>
-    </div>
-
-    <div class="client-grid">
-      <button class="panel client-link" data-go="profile">
-        <p class="eyebrow">ACCOUNT</p>
-        <h3>My Profile</h3>
-        <p class="muted">View your personal details and status.</p>
-      </button>
-
-      <button class="panel client-link" data-go="plans">
-        <p class="eyebrow">MEMBERSHIPS</p>
-        <h3>Membership Plans</h3>
-        <p class="muted">Browse available gym plans.</p>
-      </button>
-
-      <button class="panel client-link" data-go="orders">
-        <p class="eyebrow">PURCHASES</p>
-        <h3>My Orders</h3>
-        <p class="muted">View your order history.</p>
-      </button>
-
-      <button class="panel client-link" data-go="tickets">
-        <p class="eyebrow">HELP</p>
-        <h3>Support Tickets</h3>
-        <p class="muted">View your support requests.</p>
-      </button>
-    </div>`;
+  content.innerHTML = ` <div class="intro"> <div> <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1> </div> </div> <div class="client-grid"> <button class="panel client-link" data-go="profile"> <p class="eyebrow">ACCOUNT</p> <h3>My Profile</h3> <p class="muted">View your personal details and status.</p> </button> <button class="panel client-link" data-go="plans"> <p class="eyebrow">MEMBERSHIPS</p> <h3>Membership Plans</h3> <p class="muted">Browse available gym plans.</p> </button> <button class="panel client-link" data-go="orders"> <p class="eyebrow">PURCHASES</p> <h3>My Orders</h3> <p class="muted">View your order history.</p> </button> <button class="panel client-link" data-go="tickets"> <p class="eyebrow">HELP</p> <h3>Support Tickets</h3> <p class="muted">View your support requests.</p> </button> </div>`;
 
   content.querySelectorAll("[data-go]").forEach((button) => {
     button.addEventListener("click", () => showSection(button.dataset.go));
@@ -248,50 +290,29 @@ function renderDashboard(content) {
 }
 
 function renderProfile(content) {
-  content.innerHTML = `
-    <div class="intro">
-      <div>
-        <p class="eyebrow">ACCOUNT DETAILS</p>
-        <h1>My Profile</h1>
-      </div>
-    </div>
-
-    <article class="panel">
-      <p class="client-detail"><b>Full name</b><span>${esc(customer.full_name)}</span></p>
-      <p class="client-detail"><b>Email</b><span>${esc(customer.email || user.email)}</span></p>
-      <p class="client-detail"><b>Phone</b><span>${esc(customer.phone || "Not provided")}</span></p>
-      <p class="client-detail"><b>Status</b><span>${esc(customer.status || "—")}</span></p>
-      <p class="client-detail"><b>Joined</b><span>${esc(customer.joined_on || "—")}</span></p>
-    </article>`;
+  content.innerHTML = ` <div class="intro"> <div> <p class="eyebrow">ACCOUNT DETAILS</p> <h1>My Profile</h1> </div> </div> <article class="panel"> <p class="client-detail"><b>Full name</b><span>${esc( customer.full_name )}</span></p> <p class="client-detail"><b>Email</b><span>${esc( customer.email || user.email )}</span></p> <p class="client-detail"><b>Phone</b><span>${esc( customer.phone || "Not provided" )}</span></p> <p class="client-detail"><b>Status</b><span>${esc( customer.status || "—" )}</span></p> <p class="client-detail"><b>Joined</b><span>${esc( customer.joined_on || "—" )}</span></p> </article>`;
 }
 
 async function renderList(content, section) {
   const config = LIST_SECTIONS[section];
   const query = db.from(config.table).select("*");
 
-  const result = section === "plans"
-    ? await query.limit(100)
-    : await query.eq("customer_id", customer.id).limit(100);
+  const result =
+    section === "plans"
+      ? await query.limit(100)
+      : await query.eq("customer_id", customer.id).limit(100);
 
   let body;
 
   if (result.error) {
-    body = `<p class="client-error">Could not load this section: ${esc(result.error.message)}</p>`;
+    body = `<p class="client-error">Could not load this section: ${esc( result.error.message )}</p>`;
   } else if (result.data?.length) {
     body = result.data.map(config.render).join("");
   } else {
     body = `<p class="muted">${esc(config.empty)}</p>`;
   }
 
-  content.innerHTML = `
-    <div class="intro">
-      <div>
-        <p class="eyebrow">MY APEXFITNESS</p>
-        <h1>${esc(config.title)}</h1>
-      </div>
-    </div>
-
-    <article class="panel">${body}</article>`;
+  content.innerHTML = ` <div class="intro"> <div> <p class="eyebrow">MY APEXFITNESS</p> <h1>${esc(config.title)}</h1> </div> </div> <article class="panel">${body}</article>`;
 }
 
 async function showSection(section) {
@@ -308,16 +329,7 @@ async function showSection(section) {
 
   $("#clientSidebar").classList.remove("open");
 
-  content.innerHTML = `
-    <div class="intro">
-      <div>
-        <p class="eyebrow">MY APEXFITNESS</p>
-        <h1>${esc(title)}</h1>
-        <p class="muted">Your account information in one place.</p>
-      </div>
-    </div>
-
-    <article class="panel"><p class="muted">Loading…</p></article>`;
+  content.innerHTML = ` <div class="intro"> <div> <p class="eyebrow">MY APEXFITNESS</p> <h1>${esc(title)}</h1> <p class="muted">Your account information in one place.</p> </div> </div> <article class="panel"><p class="muted">Loading…</p></article>`;
 
   if (section === "dashboard") return renderDashboard(content);
   if (section === "profile") return renderProfile(content);

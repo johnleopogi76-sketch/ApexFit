@@ -830,7 +830,11 @@ async function openEditor(row = null) {
   editing = row;
 
   $("#editorTitle").textContent =
-    `${row ? "Edit" : "Add"} ${TABLES[view][0].replace(/s$/, "")}`;
+  `${row ? "Edit" : "Add"} ${
+    view === "opportunities"
+      ? "Opportunities"
+      : TABLES[view][0].replace(/s$/, "")
+  }`;
 
   $("#editorMessage").textContent = "";
   $("#editorHelp").textContent =

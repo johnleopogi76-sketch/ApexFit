@@ -8,14 +8,19 @@ const TABLES = {
   orders: ["Orders", "Membership orders and sales."],
   tickets: ["Support tickets", "Customer concerns and service requests."],
   interactions: ["Interactions", "Customer conversations and follow-ups."],
-  users: ["User accounts", "View registered accounts. Editing is disabled in this starter."],
+  users: [
+    "User accounts",
+    "View registered accounts. Editing is disabled in this starter.",
+  ],
 };
 
 const $ = (s) => document.querySelector(s);
 
 let db, user, profile;
 let view = "dashboard";
-let rows = [], columns = [], editing = null;
+let rows = [],
+  columns = [],
+  editing = null;
 let toastTimer;
 let editorOptions = {};
 let displayMaps = {};
@@ -47,13 +52,14 @@ function safe(v) {
 function esc(v) {
   return String(v ?? "—").replace(
     /[&<>"']/g,
-    c => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[c]
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[c])
   );
 }
 
@@ -83,17 +89,13 @@ function setupClient() {
     return false;
   }
 
-  db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }
-  );
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
 
   return true;
 }
@@ -163,16 +165,21 @@ async function enterApp(signedInUser) {
   $("#app").classList.remove("hidden");
 
   const displayName = (profile?.full_name || user.email || "there").trim();
-  const firstName = displayName.includes("@") ? displayName.split("@")[0] : displayName.split(/\s+/)[0];
+  const firstName = displayName.includes("@")
+    ? displayName.split("@")[0]
+    : displayName.split(/\s+/)[0];
   const hour = new Date().getHours();
-  const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const timeGreeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const roleName = profile?.role || "User";
   const greeting = document.querySelector("#dashboardGreeting");
   const roleLabel = document.querySelector("#dashboardRole");
   const welcomeNote = document.querySelector("#dashboardWelcomeNote");
   if (greeting) greeting.textContent = `${timeGreeting}, ${firstName}!`;
-  if (roleLabel) roleLabel.textContent = `APEXFITNESS ${roleName.toUpperCase()} WORKSPACE`;
-  if (welcomeNote) welcomeNote.textContent = `You're signed in as ${roleName}. Here's your workspace overview.`;
+  if (roleLabel)
+    roleLabel.textContent = `APEXFITNESS ${roleName.toUpperCase()} WORKSPACE`;
+  if (welcomeNote)
+    welcomeNote.textContent = `You're signed in as ${roleName}. Here's your workspace overview.`;
 
   $("#clientPortal").classList.add("hidden");
   $("#sidebar").classList.remove("client-mode");
@@ -202,22 +209,16 @@ async function loadDisplayMaps() {
         .limit(500);
 
       if (error) {
-        console.warn(
-          `Could not load ${table} display names:`,
-          error.message
-        );
+        console.warn(`Could not load ${table} display names:`, error.message);
         return;
       }
 
       displayMaps[table] = Object.fromEntries(
-        (data || []).map(row => {
+        (data || []).map((row) => {
           const code = row.display_code || String(row.id).slice(0, 8);
           const label = row[labelColumn];
 
-          return [
-            String(row.id),
-            label ? `${code} — ${label}` : code
-          ];
+          return [String(row.id), label ? `${code} — ${label}` : code];
         })
       );
     })
@@ -254,10 +255,7 @@ function displayCell(column, value, row = null) {
     if (label) return label;
   }
 
-  if (
-    typeof value === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value)
-  ) {
+  if (typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value)) {
     return value.slice(0, 8) + "…";
   }
 
@@ -269,48 +267,7 @@ async function renderClientPortal() {
 
   $("#clientPortal").classList.remove("hidden");
 
-  $("#clientPortal").innerHTML = `
-    <div class="intro">
-      <div>
-        <p class="eyebrow">MEMBER PORTAL</p>
-        <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1>
-        <p class="muted">Your ApexFitness information in one place.</p>
-      </div>
-    </div>
-
-    <div class="client-grid">
-      <article class="panel">
-        <p class="eyebrow">MY PROFILE</p>
-        <h3>${esc(customer.full_name || "ApexFitness Client")}</h3>
-        <p class="client-detail"><b>Email</b><span>${esc(customer.email || user.email)}</span></p>
-        <p class="client-detail"><b>Phone</b><span>${esc(customer.phone || "Not provided")}</span></p>
-        <p class="client-detail"><b>Status</b><span>${esc(customer.status || "—")}</span></p>
-      </article>
-
-      <article class="panel">
-        <p class="eyebrow">MEMBERSHIP OPTIONS</p>
-        <h3>Available plans</h3>
-        <div id="clientPlans" class="client-list"><p class="muted">Loading plans…</p></div>
-      </article>
-
-      <article class="panel">
-        <p class="eyebrow">MY ORDERS</p>
-        <h3>Orders and purchases</h3>
-        <div id="clientOrders" class="client-list"><p class="muted">Loading orders…</p></div>
-      </article>
-
-      <article class="panel">
-        <p class="eyebrow">SUPPORT</p>
-        <h3>My support tickets</h3>
-        <div id="clientTickets" class="client-list"><p class="muted">Loading tickets…</p></div>
-      </article>
-    </div>
-
-    <p class="footnote">
-      You can view only the customer record linked to your signed-in account.
-      Contact ApexFitness staff for changes or new orders.
-    </p>
-  `;
+  $("#clientPortal").innerHTML = ` <div class="intro"> <div> <p class="eyebrow">MEMBER PORTAL</p> <h1>Welcome, ${esc(customer.full_name || user.email)}.</h1> <p class="muted">Your ApexFitness information in one place.</p> </div> </div> <div class="client-grid"> <article class="panel"> <p class="eyebrow">MY PROFILE</p> <h3>${esc(customer.full_name || "ApexFitness Client")}</h3> <p class="client-detail"><b>Email</b><span>${esc( customer.email || user.email )}</span></p> <p class="client-detail"><b>Phone</b><span>${esc( customer.phone || "Not provided" )}</span></p> <p class="client-detail"><b>Status</b><span>${esc( customer.status || "—" )}</span></p> </article> <article class="panel"> <p class="eyebrow">MEMBERSHIP OPTIONS</p> <h3>Available plans</h3> <div id="clientPlans" class="client-list"><p class="muted">Loading plans…</p></div> </article> <article class="panel"> <p class="eyebrow">MY ORDERS</p> <h3>Orders and purchases</h3> <div id="clientOrders" class="client-list"><p class="muted">Loading orders…</p></div> </article> <article class="panel"> <p class="eyebrow">SUPPORT</p> <h3>My support tickets</h3> <div id="clientTickets" class="client-list"><p class="muted">Loading tickets…</p></div> </article> </div> <p class="footnote"> You can view only the customer record linked to your signed-in account. Contact ApexFitness staff for changes or new orders. </p> `;
 
   const [plansResult, ordersResult, ticketsResult] = await Promise.all([
     db.from("membership_plans").select("*").limit(100),
@@ -321,57 +278,21 @@ async function renderClientPortal() {
   renderClientList(
     "clientPlans",
     plansResult,
-    row => `
-      <div class="client-item">
-        <b>${esc(row.name || "Membership plan")}</b>
-        <span>
-          ${row.price == null
-            ? "Price not listed"
-            : "₱" + Number(row.price).toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
-          ${row.duration_months ? ` · ${esc(row.duration_months)} month(s)` : ""}
-        </span>
-      </div>
-    `,
+    (row) => ` <div class="client-item"> <b>${esc(row.name || "Membership plan")}</b> <span> ${ row.price == null ? "Price not listed" : "₱" + Number(row.price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, }) } ${ row.duration_months ? ` · ${esc(row.duration_months)} month(s)` : "" } </span> </div> `,
     "No membership plans are available."
   );
 
   renderClientList(
     "clientOrders",
     ordersResult,
-    row => `
-      <div class="client-item">
-        <b>Order ${esc(row.display_code || String(row.id || "").slice(0, 8) || "record")}</b>
-        <span>
-          ${row.amount == null
-            ? "Amount not listed"
-            : `Amount: ₱${Number(row.amount).toLocaleString("en-PH", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}`}
-          ${row.order_date ? ` · Date: ${esc(row.order_date)}` : ""}
-        </span>
-      </div>
-    `,
+    (row) => ` <div class="client-item"> <b>Order ${esc( row.display_code || String(row.id || "").slice(0, 8) || "record" )}</b> <span> ${ row.amount == null ? "Amount not listed" : `Amount: ₱${Number(row.amount).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })}` } ${row.order_date ? ` · Date: ${esc(row.order_date)}` : ""} </span> </div> `,
     "You don't have any orders yet."
   );
 
   renderClientList(
     "clientTickets",
     ticketsResult,
-    row => `
-      <div class="client-item">
-        <b>${esc(row.subject || "Support request")}</b>
-        <span>
-          ${esc(row.status || "Status not set")}
-          ${row.opened_at
-            ? ` · Opened: ${esc(new Date(row.opened_at).toLocaleDateString("en-PH"))}`
-            : ""}
-        </span>
-      </div>
-    `,
+    (row) => ` <div class="client-item"> <b>${esc(row.subject || "Support request")}</b> <span> ${esc(row.status || "Status not set")} ${ row.opened_at ? ` · Opened: ${esc( new Date(row.opened_at).toLocaleDateString("en-PH") )}` : "" } </span> </div> `,
     "You don't have any support tickets."
   );
 }
@@ -381,7 +302,7 @@ function renderClientList(id, result, render, emptyText) {
   if (!el) return;
 
   if (result.error) {
-    el.innerHTML = `<p class="client-error">Could not load this section: ${esc(result.error.message)}</p>`;
+    el.innerHTML = `<p class="client-error">Could not load this section: ${esc( result.error.message )}</p>`;
     return;
   }
 
@@ -424,12 +345,11 @@ async function dashboard() {
     })
   );
 
-  $("#stats").innerHTML = results.map(x => `
-    <article class="stat">
-      <small>${esc(x.label)}</small>
-      <b>${x.error ? "—" : x.count}</b>
-    </article>
-  `).join("");
+  $("#stats").innerHTML = results
+    .map(
+      (x) => ` <article class="stat"> <small>${esc(x.label)}</small> <b>${x.error ? "—" : x.count}</b> </article> `
+    )
+    .join("");
 }
 
 async function navigate(next) {
@@ -440,7 +360,7 @@ async function navigate(next) {
   $("#clientPortal").classList.add("hidden");
   $("#sidebar").classList.remove("open");
 
-  document.querySelectorAll("#nav [data-view]").forEach(button => {
+  document.querySelectorAll("#nav [data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
   });
 
@@ -461,10 +381,7 @@ async function navigate(next) {
   $("#recordsTitle").textContent = TABLES[view][0];
   $("#recordsDesc").textContent = TABLES[view][1];
 
-  $("#addBtn").classList.toggle(
-    "hidden",
-    view === "users" || !staffOrAdmin()
-  );
+  $("#addBtn").classList.toggle("hidden", view === "users" || !staffOrAdmin());
 
   $("#search").value = "";
   await loadTable();
@@ -492,12 +409,51 @@ async function loadTable() {
   await loadDisplayMaps();
 
   const defaults = {
-    customers: ["display_code", "full_name", "email", "phone", "status", "consent", "joined_on"],
+    customers: [
+      "display_code",
+      "full_name",
+      "email",
+      "phone",
+      "status",
+      "consent",
+      "joined_on",
+    ],
     membership_plans: ["display_code", "name", "price", "duration_months"],
-    opportunities: ["display_code", "customer_id", "plan_id", "owner_id", "stage", "created_on"],
-    orders: ["display_code", "customer_id", "plan_id", "opportunity_id", "amount", "order_date"],
-    tickets: ["display_code", "customer_id", "assigned_to", "subject", "status", "satisfaction", "opened_at", "closed_at"],
-    interactions: ["display_code", "customer_id", "user_id", "ticket_id", "channel", "notes", "logged_at"],
+    opportunities: [
+      "display_code",
+      "customer_id",
+      "plan_id",
+      "owner_id",
+      "stage",
+      "created_on",
+    ],
+    orders: [
+      "display_code",
+      "customer_id",
+      "plan_id",
+      "opportunity_id",
+      "amount",
+      "order_date",
+    ],
+    tickets: [
+      "display_code",
+      "customer_id",
+      "assigned_to",
+      "subject",
+      "status",
+      "satisfaction",
+      "opened_at",
+      "closed_at",
+    ],
+    interactions: [
+      "display_code",
+      "customer_id",
+      "user_id",
+      "ticket_id",
+      "channel",
+      "notes",
+      "logged_at",
+    ],
     users: ["display_code", "full_name", "email", "role"],
   };
 
@@ -507,9 +463,9 @@ async function loadTable() {
     ? [
         "display_code",
         ...availableColumns.filter(
-          column => column !== "id" && column !== "display_code"
+          (column) => column !== "id" && column !== "display_code"
         ),
-      ].filter(column => availableColumns.includes(column))
+      ].filter((column) => availableColumns.includes(column))
     : defaults[view] || [];
 
   renderRows();
@@ -518,61 +474,29 @@ async function loadTable() {
 function renderRows() {
   const query = ($("#search").value || "").toLowerCase().trim();
 
-  const filtered = rows.filter(row =>
-    !query ||
-    Object.values(row).some(value =>
-      safe(value).toLowerCase().includes(query)
-    ) ||
-    columns.some(column =>
-      displayCell(column, row[column], row).toLowerCase().includes(query)
-    )
+  const filtered = rows.filter(
+    (row) =>
+      !query ||
+      Object.values(row).some((value) =>
+        safe(value).toLowerCase().includes(query)
+      ) ||
+      columns.some((column) =>
+        displayCell(column, row[column], row).toLowerCase().includes(query)
+      )
   );
 
-  $("#count").textContent =
-    `${filtered.length} record${filtered.length === 1 ? "" : "s"}`;
+  $("#count").textContent = `${filtered.length} record${ filtered.length === 1 ? "" : "s" }`;
 
-  $("#thead").innerHTML = `
-    <tr>
-      ${columns.map(column =>
-        `<th>${esc(column.replaceAll("_", " "))}</th>`
-      ).join("")}
-      <th>Actions</th>
-    </tr>
-  `;
+  $("#thead").innerHTML = ` <tr> ${columns .map((column) => `<th>${esc(column.replaceAll("_", " "))}</th>`) .join("")} <th>Actions</th> </tr> `;
 
-  $("#tbody").innerHTML = filtered.map(row => {
-    const idx = rows.indexOf(row);
-    const readOnly = view === "users";
+  $("#tbody").innerHTML = filtered
+    .map((row) => {
+      const idx = rows.indexOf(row);
+      const readOnly = view === "users";
 
-    return `
-      <tr>
-        ${columns.map(column => {
-          const raw = safe(row[column]);
-          const display = displayCell(column, row[column], row);
-
-          return `<td title="${esc(raw)}">${esc(display)}</td>`;
-        }).join("")}
-
-        <td>
-          <div class="actions">
-            <button
-              class="text-btn"
-              data-action="edit"
-              data-index="${idx}"
-              ${!readOnly && staffOrAdmin() ? "" : "disabled"}
-            >Edit</button>
-
-            <button
-              class="text-btn danger"
-              data-action="delete"
-              data-index="${idx}"
-              ${!readOnly && admin() ? "" : "disabled"}
-            >Delete</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
+      return ` <tr> ${columns .map((column) => { const raw = safe(row[column]); const display = displayCell(column, row[column], row); return `<td title="${esc(raw)}">${esc(display)}</td>`; }) .join("")} <td> <div class="actions"> <button class="text-btn" data-action="edit" data-index="${idx}" ${!readOnly && staffOrAdmin() ? "" : "disabled"} >Edit</button> <button class="text-btn danger" data-action="delete" data-index="${idx}" ${!readOnly && admin() ? "" : "disabled"} >Delete</button> </div> </td> </tr> `;
+    })
+    .join("");
 
   $("#empty").classList.toggle("hidden", filtered.length > 0);
 
@@ -586,24 +510,31 @@ function renderRows() {
       : "You can add a record if your role has permission.";
   }
 
-  $("#tbody").querySelectorAll("[data-action]").forEach(button => {
-    button.addEventListener("click", () => {
-      const row = rows[Number(button.dataset.index)];
+  $("#tbody")
+    .querySelectorAll("[data-action]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const row = rows[Number(button.dataset.index)];
 
-      if (button.dataset.action === "edit") {
-        openEditor(row);
-      } else {
-        openDeleteDialog(row);
-      }
+        if (button.dataset.action === "edit") {
+          openEditor(row);
+        } else {
+          openDeleteDialog(row);
+        }
+      });
     });
-  });
 }
 
 const FIELD_CONFIG = {
   customers: [
     { key: "full_name", label: "Full name", required: true, maxLength: 120 },
     { key: "email", label: "Email address", type: "email", required: true },
-    { key: "phone", label: "Phone number", required: true, placeholder: "+63 917 000 0000" },
+    {
+      key: "phone",
+      label: "Phone number",
+      required: true,
+      placeholder: "+63 917 000 0000",
+    },
     {
       key: "status",
       label: "Customer status",
@@ -611,25 +542,66 @@ const FIELD_CONFIG = {
       options: [
         ["lead", "Lead"],
         ["active", "Active member"],
-        ["inactive", "Inactive"]
+        ["inactive", "Inactive"],
       ],
       default: "lead",
-      required: true
+      required: true,
     },
-    { key: "consent", label: "Marketing consent", type: "checkbox", default: false },
+    {
+      key: "consent",
+      label: "Marketing consent",
+      type: "checkbox",
+      default: false,
+    },
     { key: "joined_on", label: "Joined date", type: "date" },
   ],
 
   membership_plans: [
     { key: "name", label: "Plan name", required: true, maxLength: 80 },
-    { key: "price", label: "Price (PHP ₱)", type: "number", min: 0, step: "0.01", required: true },
-    { key: "duration_months", label: "Duration (months)", type: "number", min: 1, max: 120, step: 1, required: true },
+    {
+      key: "price",
+      label: "Price (PHP ₱)",
+      type: "number",
+      min: 0,
+      step: "0.01",
+      required: true,
+    },
+    {
+      key: "duration_months",
+      label: "Duration (months)",
+      type: "number",
+      min: 1,
+      max: 120,
+      step: 1,
+      required: true,
+    },
   ],
 
   opportunities: [
-    { key: "customer_id", label: "Customer", type: "reference", table: "customers", required: true, display: "full_name" },
-    { key: "plan_id", label: "Membership plan", type: "reference", table: "membership_plans", required: true, display: "name" },
-    { key: "owner_id", label: "Assigned staff member", type: "reference", table: "users", required: true, display: "full_name" },
+    {
+      key: "customer_id",
+      label: "Customer",
+      type: "reference",
+      table: "customers",
+      required: true,
+      display: "full_name",
+    },
+    {
+      key: "plan_id",
+      label: "Membership plan",
+      type: "reference",
+      table: "membership_plans",
+      required: true,
+      display: "name",
+    },
+    {
+      key: "owner_id",
+      label: "Assigned staff member",
+      type: "reference",
+      table: "users",
+      required: true,
+      display: "full_name",
+    },
     {
       key: "stage",
       label: "Sales stage",
@@ -639,26 +611,74 @@ const FIELD_CONFIG = {
         ["Qualified", "Qualified"],
         ["Proposal", "Proposal"],
         ["Won", "Won"],
-        ["Lost", "Lost"]
+        ["Lost", "Lost"],
       ],
       default: "Lead",
-      required: true
+      required: true,
     },
     { key: "created_on", label: "Opportunity date", type: "date" },
   ],
 
   orders: [
-    { key: "customer_id", label: "Customer", type: "reference", table: "customers", required: true, display: "full_name" },
-    { key: "plan_id", label: "Membership plan", type: "reference", table: "membership_plans", required: true, display: "name" },
-    { key: "opportunity_id", label: "Related opportunity (optional)", type: "reference", table: "opportunities", display: "display_code", optional: true },
-    { key: "amount", label: "Order amount (PHP ₱)", type: "number", min: 0, step: "0.01", required: true },
+    {
+      key: "customer_id",
+      label: "Customer",
+      type: "reference",
+      table: "customers",
+      required: true,
+      display: "full_name",
+    },
+    {
+      key: "plan_id",
+      label: "Membership plan",
+      type: "reference",
+      table: "membership_plans",
+      required: true,
+      display: "name",
+    },
+    {
+      key: "opportunity_id",
+      label: "Related opportunity (optional)",
+      type: "reference",
+      table: "opportunities",
+      display: "display_code",
+      optional: true,
+    },
+    {
+      key: "amount",
+      label: "Order amount (PHP ₱)",
+      type: "number",
+      min: 0,
+      step: "0.01",
+      required: true,
+    },
     { key: "order_date", label: "Order date", type: "date" },
   ],
 
   tickets: [
-    { key: "customer_id", label: "Customer", type: "reference", table: "customers", required: true, display: "full_name" },
-    { key: "assigned_to", label: "Assign to staff (optional)", type: "reference", table: "users", display: "full_name", optional: true },
-    { key: "subject", label: "Concern / subject", required: true, minLength: 3, maxLength: 200 },
+    {
+      key: "customer_id",
+      label: "Customer",
+      type: "reference",
+      table: "customers",
+      required: true,
+      display: "full_name",
+    },
+    {
+      key: "assigned_to",
+      label: "Assign to staff (optional)",
+      type: "reference",
+      table: "users",
+      display: "full_name",
+      optional: true,
+    },
+    {
+      key: "subject",
+      label: "Concern / subject",
+      required: true,
+      minLength: 3,
+      maxLength: 200,
+    },
     {
       key: "status",
       label: "Ticket status",
@@ -666,18 +686,47 @@ const FIELD_CONFIG = {
       options: [
         ["open", "Open"],
         ["assigned", "Assigned"],
-        ["closed", "Closed"]
+        ["closed", "Closed"],
       ],
       default: "open",
-      required: true
+      required: true,
     },
-    { key: "satisfaction", label: "Satisfaction rating (optional)", type: "number", min: 1, max: 5, step: 1, optional: true },
+    {
+      key: "satisfaction",
+      label: "Satisfaction rating (optional)",
+      type: "number",
+      min: 1,
+      max: 5,
+      step: 1,
+      optional: true,
+    },
   ],
 
   interactions: [
-    { key: "customer_id", label: "Customer", type: "reference", table: "customers", required: true, display: "full_name" },
-    { key: "user_id", label: "Staff member", type: "reference", table: "users", required: true, display: "full_name" },
-    { key: "ticket_id", label: "Related ticket (optional)", type: "reference", table: "tickets", display: "subject", optional: true },
+    {
+      key: "customer_id",
+      label: "Customer",
+      type: "reference",
+      table: "customers",
+      required: true,
+      display: "full_name",
+    },
+    {
+      key: "user_id",
+      label: "Staff member",
+      type: "reference",
+      table: "users",
+      required: true,
+      display: "full_name",
+    },
+    {
+      key: "ticket_id",
+      label: "Related ticket (optional)",
+      type: "reference",
+      table: "tickets",
+      display: "subject",
+      optional: true,
+    },
     {
       key: "channel",
       label: "Contact channel",
@@ -686,10 +735,10 @@ const FIELD_CONFIG = {
         ["call", "Call"],
         ["chat", "Chat"],
         ["walk-in", "Walk-in"],
-        ["email", "Email"]
+        ["email", "Email"],
       ],
       required: true,
-      default: "chat"
+      default: "chat",
     },
     { key: "notes", label: "Notes", type: "textarea", maxLength: 2000 },
   ],
@@ -720,13 +769,10 @@ async function loadReferenceOptions(field) {
   const displayColumn = field.display || "id";
 
   const selectColumns = [
-    ...new Set(["id", "display_code", displayColumn])
+    ...new Set(["id", "display_code", displayColumn]),
   ].join(", ");
 
-  let query = db
-    .from(field.table)
-    .select(selectColumns)
-    .limit(500);
+  let query = db.from(field.table).select(selectColumns).limit(500);
 
   if (field.table === "users") {
     query = query.in("role", ["Admin", "Staff"]);
@@ -748,80 +794,27 @@ function fieldControl(field, value, row) {
       ? "required"
       : "";
 
-  const common = `
-    id="${id}"
-    name="${field.key}"
-    ${required}
-    ${field.minLength ? `minlength="${field.minLength}"` : ""}
-    ${field.maxLength ? `maxlength="${field.maxLength}"` : ""}
-    ${field.min !== undefined ? `min="${field.min}"` : ""}
-    ${field.max !== undefined ? `max="${field.max}"` : ""}
-    ${field.step ? `step="${field.step}"` : ""}
-    placeholder="${esc(field.placeholder || "")}"
-  `;
+  const common = ` id="${id}" name="${field.key}" ${required} ${field.minLength ? `minlength="${field.minLength}"` : ""} ${field.maxLength ? `maxlength="${field.maxLength}"` : ""} ${field.min !== undefined ? `min="${field.min}"` : ""} ${field.max !== undefined ? `max="${field.max}"` : ""} ${field.step ? `step="${field.step}"` : ""} placeholder="${esc(field.placeholder || "")}" `;
 
   if (field.type === "checkbox") {
-    return `
-      <label class="check-field" for="${id}">
-        <input ${common} type="checkbox" ${value ? "checked" : ""}>
-        ${esc(field.label)}
-      </label>
-    `;
+    return ` <label class="check-field" for="${id}"> <input ${common} type="checkbox" ${value ? "checked" : ""}> ${esc(field.label)} </label> `;
   }
 
   if (field.type === "select") {
-    return `
-      <label for="${id}">${esc(field.label)}</label>
-      <select ${common}>
-        ${field.options.map(([v, text]) => `
-          <option value="${esc(v)}" ${String(value) === v ? "selected" : ""}>
-            ${esc(text)}
-          </option>
-        `).join("")}
-      </select>
-    `;
+    return ` <label for="${id}">${esc(field.label)}</label> <select ${common}> ${field.options .map( ([v, text]) => ` <option value="${esc(v)}" ${String(value) === v ? "selected" : ""}> ${esc(text)} </option> ` ) .join("")} </select> `;
   }
 
   if (field.type === "reference") {
     const opts = editorOptions[field.table] || [];
 
-    return `
-      <label for="${id}">${esc(field.label)}</label>
-      <select ${common}>
-        <option value="">
-          ${field.optional ? "None selected" : "Choose an option"}
-        </option>
-        ${opts.map(option => {
-          const code = option.display_code || option.id;
-
-          const label = field.display === "display_code"
-            ? code
-            : `${code} — ${option[field.display] || ""}`;
-
-          return `
-            <option
-              value="${esc(option.id)}"
-              ${String(value) === String(option.id) ? "selected" : ""}
-            >
-              ${esc(label)}
-            </option>
-          `;
-        }).join("")}
-      </select>
-    `;
+    return ` <label for="${id}">${esc(field.label)}</label> <select ${common}> <option value=""> ${field.optional ? "None selected" : "Choose an option"} </option> ${opts .map((option) => { const code = option.display_code || option.id; const label = field.display === "display_code" ? code : `${code} — ${option[field.display] || ""}`; return ` <option value="${esc(option.id)}" ${String(value) === String(option.id) ? "selected" : ""} > ${esc(label)} </option> `; }) .join("")} </select> `;
   }
 
   if (field.type === "textarea") {
-    return `
-      <label for="${id}">${esc(field.label)}</label>
-      <textarea ${common} rows="4">${esc(value)}</textarea>
-    `;
+    return ` <label for="${id}">${esc(field.label)}</label> <textarea ${common} rows="4">${esc(value)}</textarea> `;
   }
 
-  return `
-    <label for="${id}">${esc(field.label)}</label>
-    <input ${common} type="${field.type || "text"}" value="${esc(value)}">
-  `;
+  return ` <label for="${id}">${esc(field.label)}</label> <input ${common} type="${field.type || "text"}" value="${esc(value)}"> `;
 }
 
 async function openEditor(row = null) {
@@ -829,12 +822,7 @@ async function openEditor(row = null) {
 
   editing = row;
 
-  $("#editorTitle").textContent =
-  `${row ? "Edit" : "Add"} ${
-    view === "opportunities"
-      ? "Opportunities"
-      : TABLES[view][0].replace(/s$/, "")
-  }`;
+  $("#editorTitle").textContent = `${row ? "Edit" : "Add"} ${ view === "opportunities" ? "Opportunities" : TABLES[view][0].replace(/s$/, "") }`;
 
   $("#editorMessage").textContent = "";
   $("#editorHelp").textContent =
@@ -845,27 +833,24 @@ async function openEditor(row = null) {
   try {
     editorOptions = {};
 
-    for (const field of fields.filter(f => f.type === "reference")) {
+    for (const field of fields.filter((f) => f.type === "reference")) {
       await loadReferenceOptions(field);
     }
 
     $("#editorFields").innerHTML = fields
-      .map(field => `
-        <div class="field-wrap">
-          ${fieldControl(field, defaultFieldValue(field, row), row)}
-        </div>
-      `)
+      .map(
+        (field) => ` <div class="field-wrap"> ${fieldControl(field, defaultFieldValue(field, row), row)} </div> `
+      )
       .join("");
 
     $("#editorDialog").showModal();
   } catch (error) {
-    $("#editorMessage").textContent =
-      `Could not load form options: ${errText(error)}`;
+    $("#editorMessage").textContent = `Could not load form options: ${errText( error )}`;
     $("#editorDialog").showModal();
   }
 }
 
-$("#editorForm").addEventListener("submit", async e => {
+$("#editorForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   if (view === "users" || !FIELD_CONFIG[view]) return;
@@ -876,8 +861,7 @@ $("#editorForm").addEventListener("submit", async e => {
     const control = document.getElementById(`field-${field.key}`);
     if (!control) continue;
 
-    let value =
-      field.type === "checkbox" ? control.checked : control.value;
+    let value = field.type === "checkbox" ? control.checked : control.value;
 
     if (value === "" && (field.optional || !field.required)) {
       if (field.type !== "checkbox") value = null;
@@ -895,7 +879,11 @@ $("#editorForm").addEventListener("submit", async e => {
   }
 
   if (view === "tickets" && payload.status === "closed") {
-    if (payload.satisfaction === null || payload.satisfaction === undefined || payload.satisfaction === "") {
+    if (
+      payload.satisfaction === null ||
+      payload.satisfaction === undefined ||
+      payload.satisfaction === ""
+    ) {
       $("#editorMessage").textContent =
         "Please enter a satisfaction rating from 1 to 5 before closing this ticket.";
       return;
@@ -915,10 +903,7 @@ $("#editorForm").addEventListener("submit", async e => {
     let result;
 
     if (editing) {
-      result = await db
-        .from(view)
-        .update(payload)
-        .eq("id", editing.id);
+      result = await db.from(view).update(payload).eq("id", editing.id);
     } else {
       result = await db.from(view).insert(payload);
     }
@@ -955,8 +940,10 @@ function openDeleteDialog(row) {
     "this record";
 
   $("#deleteRecordName").textContent = String(recordLabel);
-  $("#deleteRecordType").textContent =
-    (TABLES[view]?.[0] || "Record").replace(/s$/, "");
+  $("#deleteRecordType").textContent = (TABLES[view]?.[0] || "Record").replace(
+    /s$/,
+    ""
+  );
   $("#deleteMessage").textContent = "";
   $("#confirmDelete").disabled = false;
   $("#confirmDelete").textContent = "Delete record";
@@ -975,10 +962,7 @@ async function removeRow() {
   $("#deleteMessage").textContent = "";
 
   try {
-    const { error } = await db
-      .from(view)
-      .delete()
-      .eq("id", pendingDelete.id);
+    const { error } = await db.from(view).delete().eq("id", pendingDelete.id);
 
     if (error) throw error;
 
@@ -1005,7 +989,7 @@ $("#closeDeleteDialog").addEventListener("click", () => {
   pendingDelete = null;
 });
 
-$("#loginForm").addEventListener("submit", async e => {
+$("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   if (!db && !setupClient()) return;
@@ -1014,7 +998,9 @@ $("#loginForm").addEventListener("submit", async e => {
   button.disabled = true;
   button.textContent = "Signing in…";
   document.querySelector("#loadingOverlay")?.classList.add("active");
-  document.querySelector("#loadingOverlay")?.setAttribute("aria-hidden", "false");
+  document
+    .querySelector("#loadingOverlay")
+    ?.setAttribute("aria-hidden", "false");
   message("");
 
   try {
@@ -1038,7 +1024,9 @@ $("#loginForm").addEventListener("submit", async e => {
     button.disabled = false;
     button.textContent = "Sign in";
     document.querySelector("#loadingOverlay")?.classList.remove("active");
-    document.querySelector("#loadingOverlay")?.setAttribute("aria-hidden", "true");
+    document
+      .querySelector("#loadingOverlay")
+      ?.setAttribute("aria-hidden", "true");
   }
 });
 
@@ -1048,12 +1036,12 @@ $("#menu").addEventListener("click", () => {
   $("#sidebar").classList.toggle("open");
 });
 
-$("#nav").addEventListener("click", e => {
+$("#nav").addEventListener("click", (e) => {
   const button = e.target.closest("[data-view]");
   if (button) navigate(button.dataset.view);
 });
 
-document.querySelectorAll("[data-jump]").forEach(button => {
+document.querySelectorAll("[data-jump]").forEach((button) => {
   button.addEventListener("click", () => navigate(button.dataset.jump));
 });
 
@@ -1089,7 +1077,7 @@ async function boot() {
 
     if (event === "SIGNED_IN" && session?.user && !user) {
       setTimeout(
-        () => enterApp(session.user).catch(error => message(errText(error))),
+        () => enterApp(session.user).catch((error) => message(errText(error))),
         0
       );
     }

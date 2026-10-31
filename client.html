@@ -4,112 +4,312 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ApexFitness | Client Portal</title>
+
   <link rel="stylesheet" href="styles.css">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="client.js" defer></script>
 </head>
+
 <body>
   <div id="toast" class="toast" role="status"></div>
-  <div id="loadingOverlay" class="loading-overlay" aria-live="polite" aria-label="Loading" aria-hidden="true">
+
+  <div
+    id="loadingOverlay"
+    class="loading-overlay"
+    aria-live="polite"
+    aria-label="Loading"
+    aria-hidden="true"
+  >
     <div class="loading-content">
-      <div class="loading-mark"><img src="logo.png" alt=""></div>
-      <div class="loading-spinner" aria-hidden="true"><span></span></div>
+      <div class="loading-mark">
+        <img src="logo.png" alt="">
+      </div>
+
+      <div class="loading-spinner" aria-hidden="true">
+        <span></span>
+      </div>
+
       <p class="loading-title">APEXFITNESS</p>
       <p class="loading-caption">Preparing your workspace…</p>
     </div>
   </div>
 
-  <!-- ===== Sign in ===== -->
+  <!-- ===== Sign in and Registration ===== -->
   <main id="loginScreen" class="login-layout">
+
     <section class="hero">
-      <div class="hero-logo"><img src="logo.png" alt="ApexFit logo"></div>
+      <div class="hero-logo">
+        <img src="logo.png" alt="ApexFitness logo">
+      </div>
 
       <div class="hero-copy">
         <p class="eyebrow">APEXFITNESS MEMBER PORTAL</p>
-        <h1>Your fitness.<br><span>Your progress.</span></h1>
-        <p>View your profile, membership options, orders, and support requests.</p>
+
+        <h1>
+          Your fitness.<br>
+          <span>Your progress.</span>
+        </h1>
+
+        <p>
+          View your profile, membership options, orders, and support requests.
+        </p>
       </div>
     </section>
 
     <section class="login-card">
+
       <p class="eyebrow">CLIENT SIGN IN</p>
       <h2>Welcome back</h2>
-      <p class="muted">Sign in with your registered client account.</p>
 
+      <p class="muted">
+        Sign in with your registered client account.
+      </p>
+
+      <!-- ===== Login Form ===== -->
       <form id="loginForm">
+
         <label for="email">Email address</label>
-        <input id="email" type="email" autocomplete="username" required placeholder="you@example.com">
+        <input
+          id="email"
+          type="email"
+          autocomplete="username"
+          required
+          placeholder="you@example.com"
+        >
 
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" required placeholder="Your password">
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          required
+          placeholder="Your password"
+        >
 
-        <p id="loginMessage" class="message" aria-live="polite"></p>
+        <p
+          id="loginMessage"
+          class="message"
+          aria-live="polite"
+        ></p>
 
-        <button class="primary full" type="submit">Sign in</button>
+        <button class="primary full" type="submit">
+          Sign in
+        </button>
+
       </form>
 
+      <!-- ===== Client Registration Form ===== -->
       <form id="registerForm" class="hidden">
-        <label for="registerName">Full name</label>
-        <input id="registerName" type="text" autocomplete="name" required maxlength="120" placeholder="Your full name">
 
+        <label for="registerName">Full name</label>
+        <input
+          id="registerName"
+          name="full_name"
+          type="text"
+          autocomplete="name"
+          required
+          maxlength="120"
+          placeholder="Your full name"
+        >
+
+        <!-- Phone number: exactly 11 digits -->
         <label for="registerPhone">Phone number</label>
-        <input id="registerPhone" type="tel" autocomplete="tel" maxlength="30" placeholder="Your phone number">
+        <input
+          id="registerPhone"
+          name="phone"
+          type="tel"
+          autocomplete="tel"
+          inputmode="numeric"
+          pattern="[0-9]{11}"
+          minlength="11"
+          maxlength="11"
+          placeholder="09XXXXXXXXX"
+          title="Phone number must contain exactly 11 digits."
+          aria-describedby="phoneHelp"
+          required
+        >
+
+        <small id="phoneHelp" class="muted">
+          Enter exactly 11 digits, for example 09123456789.
+        </small>
 
         <label for="registerEmail">Email address</label>
-        <input id="registerEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+        <input
+          id="registerEmail"
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+          placeholder="you@example.com"
+        >
 
-        <label for="registerPassword">Password (at least 8 characters)</label>
-        <input id="registerPassword" type="password" autocomplete="new-password" required minlength="8" placeholder="Create a password">
+        <label for="registerPassword">
+          Password (at least 8 characters)
+        </label>
+        <input
+          id="registerPassword"
+          name="password"
+          type="password"
+          autocomplete="new-password"
+          required
+          minlength="8"
+          placeholder="Create a password"
+        >
 
-        <p id="registerMessage" class="message" aria-live="polite"></p>
-        <button class="primary full" type="submit">Create customer account</button>
+        <p
+          id="registerMessage"
+          class="message"
+          aria-live="polite"
+        ></p>
+
+        <button class="primary full" type="submit">
+          Create customer account
+        </button>
+
       </form>
 
-      <button id="showRegister" class="secondary full" type="button">New here? Register</button>
-      <button id="showLogin" class="secondary full hidden" type="button">Already registered? Sign in</button>
-      <a class="secondary full portal-link" href="index.html">Admin / Staff Login</a>
+      <!-- ===== Form Navigation ===== -->
+      <button
+        id="showRegister"
+        class="secondary full"
+        type="button"
+      >
+        New here? Register
+      </button>
+
+      <button
+        id="showLogin"
+        class="secondary full hidden"
+        type="button"
+      >
+        Already registered? Sign in
+      </button>
+
+      <a
+        class="secondary full portal-link"
+        href="index.html"
+      >
+        Admin / Staff Login
+      </a>
 
     </section>
   </main>
 
-  <!-- ===== Client portal ===== -->
+  <!-- ===== Client Portal ===== -->
   <div id="clientApp" class="shell hidden">
+
+    <!-- ===== Sidebar ===== -->
     <aside id="clientSidebar" class="sidebar">
+
       <a class="brand" href="#">
-        <img class="logo" src="logo.png" alt="ApexFit logo">
-        <span>ApexFitness<small>CLIENT PORTAL</small></span>
+        <img
+          class="logo"
+          src="logo.png"
+          alt="ApexFitness logo"
+        >
+
+        <span>
+          ApexFitness
+          <small>CLIENT PORTAL</small>
+        </span>
       </a>
 
       <p class="side-label">MY ACCOUNT</p>
 
       <nav id="clientNav">
-        <button class="nav active" data-section="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
-        <button class="nav" data-section="profile"><span class="nav-icon">♙</span>My Profile</button>
-        <button class="nav" data-section="plans"><span class="nav-icon">◇</span>Membership Plans</button>
-        <button class="nav" data-section="orders"><span class="nav-icon">▤</span>My Orders</button>
-        <button class="nav" data-section="tickets"><span class="nav-icon">☏</span>Support Tickets</button>
+
+        <button
+          class="nav active"
+          data-section="dashboard"
+          type="button"
+        >
+          <span class="nav-icon">▦</span>
+          Dashboard
+        </button>
+
+        <button
+          class="nav"
+          data-section="profile"
+          type="button"
+        >
+          <span class="nav-icon">♙</span>
+          My Profile
+        </button>
+
+        <button
+          class="nav"
+          data-section="plans"
+          type="button"
+        >
+          <span class="nav-icon">◇</span>
+          Membership Plans
+        </button>
+
+        <button
+          class="nav"
+          data-section="orders"
+          type="button"
+        >
+          <span class="nav-icon">▤</span>
+          My Orders
+        </button>
+
+        <button
+          class="nav"
+          data-section="tickets"
+          type="button"
+        >
+          <span class="nav-icon">☏</span>
+          Support Tickets
+        </button>
+
       </nav>
 
+      <!-- ===== Sidebar Footer ===== -->
       <div class="side-bottom">
+
         <p>
           <b>Keep moving forward.</b><br>
-          <small>Your ApexFit journey starts here.</small>
+          <small>Your ApexFitness journey starts here.</small>
         </p>
-        <button id="logout" class="logout"> Sign out</button>
+
+        <button
+          id="logout"
+          class="logout"
+          type="button"
+        >
+          Sign out
+        </button>
+
       </div>
     </aside>
 
+    <!-- ===== Main Content ===== -->
     <section class="main">
+
       <header class="topbar">
-        <button id="menu" class="menu" aria-label="Open navigation">☰</button>
+
+        <button
+          id="menu"
+          class="menu"
+          type="button"
+          aria-label="Open navigation"
+        >
+          ☰
+        </button>
+
         <div>
           <p class="eyebrow">APEXFITNESS CLIENT PORTAL</p>
           <h2 id="pageTitle">Dashboard</h2>
         </div>
+
       </header>
 
       <section id="clientContent" class="view"></section>
+
     </section>
   </div>
+
 </body>
-</html>
+        </html>
